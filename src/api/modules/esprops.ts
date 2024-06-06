@@ -8,7 +8,14 @@ const esprops = {
   }),
 
   // 添加es配置
-  addConf: (data) => api.post('add', data, {
+  addConf: (data: {
+    name: string
+    version: string
+    address: string
+    username: string
+    password: string
+    selected: boolean
+  }) => api.post('add', data, {
     baseURL: '/ec/conf/',
   }),
 
@@ -26,7 +33,14 @@ const esprops = {
   },
 
   // 设置es配置
-  useConf: (data) => api.post('use', data, {
+  useConf: (data: {
+    name: string
+    version: string
+    address: string
+    username: string
+    password: string
+    selected: boolean
+  }) => api.post('use', data, {
     baseURL: '/ec/conf/',
   }),
 }

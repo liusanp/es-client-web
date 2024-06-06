@@ -8,7 +8,7 @@ import { ElMessage } from 'element-plus'
 import esprops from '@/api/modules/esprops'
 
 const tableData = ref([])
-let dialogFormVisible = false
+const dialogFormVisible = ref(false)
 const addConfForm = ref({
   name: '',
   version: '',
@@ -17,7 +17,7 @@ const addConfForm = ref({
   password: '',
   selected: false,
 })
-let addConfLoading = false
+const addConfLoading = ref(false)
 
 onMounted(() => {
   // 在初始化的时候进行获取
@@ -27,11 +27,11 @@ onMounted(() => {
 function fetchData() {
   esprops.getConf().then((res) => {
     // console.log(res)
-    if (res["code"] === 0) {
-      tableData.value = res["data"]
+    if (res.code === 0) {
+      tableData.value = res.data
     }
     else {
-      ElMessage.error(res["msg"])
+      ElMessage.error(res.data)
     }
   }).catch((error) => {
     console.error(error)
@@ -41,29 +41,30 @@ function fetchData() {
 
 function addConf() {
   // console.log(this.addConfForm)
-  addConfLoading = true
-  esprops.addConf(addConfForm).then((res) => {
+  addConfLoading.value = true
+  esprops.addConf(addConfForm.value).then((res) => {
     // console.log(res)
-    if (res["code"] === 0) {
+    if (res.code === 0) {
       ElMessage({
         message: '添加ES配置成功',
         type: 'success',
       })
       fetchData()
-    } else {
-      ElMessage.error(res["data"])
+    }
+    else {
+      ElMessage.error(res.data)
     }
   }).catch((error) => {
     console.error(error)
     ElMessage.error('添加ES配置失败')
   })
-  addConfLoading = false
-  dialogFormVisible = false
+  addConfLoading.value = false
+  dialogFormVisible.value = false
 }
 
-function delConf(name) {
+function delConf(name: string) {
   esprops.delConf(name).then((res) => {
-    if (res["code"] === 0) {
+    if (res.code === 0) {
       ElMessage({
         message: '删除ES配置成功',
         type: 'success',
@@ -71,7 +72,7 @@ function delConf(name) {
       fetchData()
     }
     else {
-      ElMessage.error(res["data"])
+      ElMessage.error(res.data)
     }
   }).catch((error) => {
     console.error(error)
@@ -83,7 +84,7 @@ function useConf(data) {
   // console.log(data)
   esprops.useConf(data).then((res) => {
     // console.log(res)
-    if (res["code"] === 0) {
+    if (res.code === 0) {
       ElMessage({
         message: '启用ES配置成功',
         type: 'success',
@@ -91,7 +92,7 @@ function useConf(data) {
       fetchData()
     }
     else {
-      ElMessage.error(res["data"])
+      ElMessage.error(res.data)
     }
   }).catch((error) => {
     console.error(error)
@@ -137,7 +138,7 @@ function useConf(data) {
       </el-dialog>
     </PageHeader>
     <PageMain>
-      <el-table :data="tableData" style="width: 100%" height="250">
+      <el-table :data="tableData" style="width: 100%;" height="250">
         <el-table-column prop="name" label="配置名称" width="150" />
         <el-table-column prop="version" label="ES版本" width="150" />
         <el-table-column prop="address" label="连接地址" width="200" />
