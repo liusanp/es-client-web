@@ -70,12 +70,6 @@ function handleLogin() {
   })
 }
 
-// onMounted(() => {
-//   if (userStore.isLogin) {
-//     router.push(redirect.value)
-//   }
-// })
-
 // 注册
 const registerFormRef = ref<FormInstance>()
 const registerForm = ref({
