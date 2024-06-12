@@ -108,7 +108,7 @@ watch([
     const filterJson = []
     const shouldJson = []
     for (const item of searchParamList.value) {
-      const searchBody = {}
+      let searchBody = {}
 
       // 不同条件
       switch (item.searchType) {
@@ -126,6 +126,17 @@ watch([
           searchBody.range[item.field] = {}
           searchBody.range[item.field][item.searchType] = item.content
           break
+      }
+      // nested
+      const dotIdx = item.field.indexOf('.')
+      if (dotIdx > -1) {
+        const tmp = {
+          nested: {
+            path: item.field.substring(0, dotIdx),
+            query: searchBody,
+          },
+        }
+        searchBody = tmp
       }
       // 不同查询类型
       switch (item.linkParam) {
@@ -375,7 +386,7 @@ function exportData() {
                   :render-after-expand="false"
                   filterable
                   placeholder="索引字段"
-                  style="width: 120px;"
+                  style="width: 200px;"
                 />
                 <el-select
                   v-model="searchParamItem.linkParam"
