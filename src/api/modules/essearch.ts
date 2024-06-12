@@ -12,6 +12,14 @@ const essearch = {
     baseURL: '/ec/es/',
   }),
 
+  queryES: data => api.post('queryES', data, {
+    baseURL: '/ec/es/',
+  }),
+
+  exportES: data => api.post('exportES', data, {
+    baseURL: '/ec/es/',
+  }),
+
 }
 
 export default essearch

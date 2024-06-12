@@ -24,6 +24,15 @@ onMounted(() => {
   fetchData()
 })
 
+function resetForm() {
+  addConfForm.value.name = ''
+  addConfForm.value.version = ''
+  addConfForm.value.address = ''
+  addConfForm.value.username = ''
+  addConfForm.value.password = ''
+  addConfForm.value.selected = false
+}
+
 function fetchData() {
   esprops.getConf().then((res) => {
     // console.log(res)
@@ -54,12 +63,14 @@ function addConf() {
     else {
       ElMessage.error(res.data)
     }
+    addConfLoading.value = false
   }).catch((error) => {
     console.error(error)
+    addConfLoading.value = false
     ElMessage.error('添加ES配置失败')
   })
-  addConfLoading.value = false
   dialogFormVisible.value = false
+  resetForm()
 }
 
 function delConf(name: string) {
@@ -138,7 +149,7 @@ function useConf(data) {
       </el-dialog>
     </PageHeader>
     <PageMain>
-      <el-table :data="tableData" style="width: 100%;" height="250">
+      <el-table :data="tableData" style="width: 100%;">
         <el-table-column prop="name" label="配置名称" width="150" />
         <el-table-column prop="version" label="ES版本" width="150" />
         <el-table-column prop="address" label="连接地址" width="200" />

@@ -4,16 +4,29 @@ meta:
 </route>
 
 <script setup lang="ts">
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { Delete } from '@element-plus/icons-vue'
+import VueJsonPretty from 'vue-json-pretty'
 import essearch from '@/api/modules/essearch'
+import 'vue-json-pretty/lib/styles.css'
 
 const indicesData = ref([])
 const mappingsData = ref([])
 const selectedIndex = ref('')
 // const selectedMapping = ref('')
-const tableData = ref([])
+const tableData = ref({
+  total: 0,
+  data: [],
+})
+const queryData = ref({
+  pageSize: 10,
+  currentPage: 1,
+  queryJson: {},
+  index: '',
+})
 const searchJsonVisible = ref(false)
+const exportLoading = ref(false)
+const searchJsonVisibleBeauty = ref(false)
 const searchJsonTemp = ref({
   query: {
     bool: {},
@@ -225,10 +238,87 @@ function removeSearchParam(item: SearchParam) {
   }
 }
 
+function changePage(currentPage: number) {
+  queryData.value.currentPage = currentPage
+  searchData()
+}
+
 function searchData() {
-  // for (let item of searchParamList.value) {
-  //   console.log(item)
-  // }
+  if (indicesData.value.length === 0) {
+    ElMessage({
+      message: '未加载索引',
+      type: 'warning',
+    })
+  }
+  else if (mappingsData.value.length === 0) {
+    ElMessage({
+      message: '未加载索引字段',
+      type: 'warning',
+    })
+  }
+  else {
+    queryData.value.queryJson = searchJsonTemp.value
+    queryData.value.index = selectedIndex.value
+    essearch.queryES(queryData.value).then((res) => {
+      // console.log(res)
+      if (res.code === 0) {
+        // ElMessage({
+        //   message: 'ES查询成功',
+        //   type: 'success',
+        // })
+        tableData.value.data = res.data.data
+        tableData.value.total = res.data.total
+      }
+      else {
+        ElMessage.error(res.data)
+      }
+    }).catch((error) => {
+      console.error(error)
+      ElMessage.error('ES查询失败')
+    })
+  }
+}
+
+function exportData() {
+  if (indicesData.value.length === 0) {
+    ElMessage({
+      message: '未加载索引',
+      type: 'warning',
+    })
+  }
+  else if (mappingsData.value.length === 0) {
+    ElMessage({
+      message: '未加载索引字段',
+      type: 'warning',
+    })
+  }
+  else {
+    exportLoading.value = true
+    queryData.value.queryJson = searchJsonTemp.value
+    queryData.value.index = selectedIndex.value
+    essearch.exportES(queryData.value).then((res) => {
+      // console.log(exportLoading.value)
+      if (res.code === 0) {
+        // ElMessage({
+        //   message: 'ES查询成功',
+        //   type: 'success',
+        // })
+        ElMessageBox.alert(res.msg, '导出通知', {
+          // if you want to disable its autofocus
+          // autofocus: false,
+          confirmButtonText: '确定',
+        })
+      }
+      else {
+        ElMessage.error(res.data)
+      }
+      exportLoading.value = false
+    }).catch((error) => {
+      console.error(error)
+      exportLoading.value = false
+      ElMessage.error('ES导出失败')
+    })
+  }
 }
 </script>
 
@@ -265,7 +355,7 @@ function searchData() {
     </PageHeader>
     <PageMain>
       <el-divider content-position="left">
-        查询条件 <el-switch v-model="searchJsonVisible" />
+        查询条件 <el-switch v-model="searchJsonVisible" />  <el-switch v-model="searchJsonVisibleBeauty" />
       </el-divider>
       <el-row :gutter="20">
         <el-col :span="14">
@@ -318,10 +408,11 @@ function searchData() {
             </el-form-item>
           </el-form>
         </el-col>
-        <el-col :span="10">
-          <div class="grid-content ep-bg-purple" />
+        <el-col v-show="searchJsonVisible" :span="10">
+          <!-- <div class="grid-content ep-bg-purple" /> -->
+          <VueJsonPretty v-show="searchJsonVisibleBeauty" :data="searchJsonTemp" />
           <el-input
-            v-show="searchJsonVisible"
+            v-show="!searchJsonVisibleBeauty"
             v-model="searchJson"
             style="width: 90%;"
             type="textarea"
@@ -332,7 +423,9 @@ function searchData() {
         </el-col>
       </el-row>
       <el-divider content-position="left">
-        操作
+        操作 <el-text class="mx-1" type="warning">
+          查询限制1000条，导出限制10000条。
+        </el-text>
       </el-divider>
       <el-row :gutter="20">
         <el-col :span="24">
@@ -343,24 +436,32 @@ function searchData() {
           <el-button type="primary" @click.prevent="searchData">
             查询
           </el-button>
-          <el-button type="primary">
+          <el-button type="primary" :loading="exportLoading" @click.prevent="exportData">
             导出
           </el-button>
         </el-col>
       </el-row>
       <el-divider content-position="left">
-        查询结果
+        查询结果 <el-text class="mx-1" type="warning">
+          共 {{ tableData.total }} 条
+        </el-text>
       </el-divider>
       <el-row :gutter="20">
         <el-col :span="24">
-          <div class="grid-content ep-bg-purple" />
-          <el-table :data="tableData" style="width: 100%;" height="250">
-            <el-table-column prop="name" label="配置名称" width="150" />
-            <el-table-column prop="version" label="ES版本" width="150" />
-            <el-table-column prop="address" label="连接地址" width="200" />
-            <el-table-column prop="username" label="用户名" width="150" />
-            <el-table-column prop="password" label="密码" width="150" />
+          <el-table :data="tableData.data" style="width: 100%;" height="400">
+            <template v-for="(item, idx) in mappingsData" :key="idx">
+              <el-table-column :prop="item.value" :label="item.label" show-overflow-tooltip />
+            </template>
           </el-table>
+          <el-pagination
+            background
+            layout="total, prev, pager, next"
+            :page-size="queryData.pageSize"
+            :current-page="queryData.currentPage"
+            :page-count="100"
+            :total="tableData.total"
+            @current-change="changePage"
+          />
         </el-col>
       </el-row>
     </PageMain>
