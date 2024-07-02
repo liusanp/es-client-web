@@ -130,13 +130,17 @@ watch([
       // nested
       const dotIdx = item.field.indexOf('.')
       if (dotIdx > -1) {
-        const tmp = {
-          nested: {
-            path: item.field.substring(0, dotIdx),
-            query: searchBody,
-          },
+        const pValue = item.field.substring(0, dotIdx)
+        const firstObjectWithValue = mappingsData.value.find(obj => obj.value === pValue)
+        if (firstObjectWithValue && firstObjectWithValue.type === 'nested') {
+          const tmp = {
+            nested: {
+              path: item.field.substring(0, dotIdx),
+              query: searchBody,
+            },
+          }
+          searchBody = tmp
         }
-        searchBody = tmp
       }
       // 不同查询类型
       switch (item.linkParam) {
